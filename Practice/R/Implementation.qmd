@@ -1,0 +1,412 @@
+---
+title: "Systematic Trading Framework : Implementation"
+format: 
+  html:
+    toc: true
+    number-sections: true
+    code-fold: true
+    code-summary: "Show the code"
+editor: source
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r, include = F, warning = F}
+knitr::opts_chunk$set(warning = FALSE)
+library(tidyverse)
+library(moments)
+theme_set(theme_classic())
+```
+
+
+# Instruments
+
+## Overview
+
+We will consider a system of five instruments divided over 5 asset classes:
+
+1. Equity: Eurostoxx
+2. Fixed Income: Eurodollar 3M
+3. Commodities: Oil
+4. FX: Mexican peso to USD exchange rate
+5. Volatility: VIX
+
+We load and plot each of these series below:
+
+```{r, warning = F}
+#| code-summary: "Data Loading"
+
+data.Eurostoxx = readxl::read_xlsx('data/EuroStoxx.xlsx') %>%
+  rename(date=Name,Eurostoxx=`MSCI EUROPE U$ - PRICE INDEX`) %>%
+  mutate(date=as.Date(date))
+data.oil = read.csv('data/oil.csv') %>%
+  rename(date=DATE,oil=DCOILBRENTEU) %>%
+  mutate(date=as.Date(date))
+data.MXPUSD = read.csv('data/MXPUSD.csv') %>%
+  rename(date=DATE,mxpusd=DEXMXUS) %>%
+  mutate(date=as.Date(date))
+data.EURODOLLAR = read.csv('data/EURODOLLAR.csv') %>%
+  rename(date=DATE,eurodollar=DED3) %>%
+  mutate(date=as.Date(date))
+data.VIX = read.csv('data/VIX.csv') %>%
+  rename(date=DATE,VIX=VIXCLS) %>%
+  mutate(date=as.Date(date))
+
+data = data.oil %>%
+  full_join(data.Eurostoxx,by='date') %>%
+  full_join(data.MXPUSD,by='date') %>%
+  #full_join(data.EURODOLLAR,by='date') %>%
+  full_join(data.VIX,by='date') %>%
+  mutate_at(vars(-date), as.numeric) %>%
+  drop_na()
+```
+
+
+```{r,warning=F}
+#| code-summary: "Data Plotting"
+
+g.data = data %>%
+  gather(key=variable,value=raw,-date) %>%
+  group_by(variable) %>%
+  mutate(returns = raw/dplyr::lag(raw,1)-1) %>%
+  mutate(returns = case_when(variable == 'eurodollar' ~ raw/(100*252), TRUE ~ returns))
+
+g.data %>%
+  ggplot() +
+  ggtitle('Trading Instruments (raw)') +
+  geom_line(aes(x=date,y=raw)) +
+  facet_wrap(~variable,scales='free_y')
+
+g.data %>%
+  ggplot() +
+  ggtitle('Trading Instruments (daily returns)') +
+  geom_line(aes(x=date,y=returns)) +
+  facet_wrap(~variable,scales='free_y') +
+  scale_y_continuous(labels = scales::percent)
+
+g.data %>%
+  ggplot(aes(x=returns)) +
+  ggtitle('Trading Instruments (distribution of returns) -- ADD SKEW PARAMETERS') +
+  geom_histogram(aes(y=..density..), colour="black", fill="white") +
+  geom_density(alpha=.2, fill="#FF6666") +
+  facet_wrap(~variable,scales='free') 
+```
+
+
+The following table provides summary statistics:
+
+```{r}
+g.data %>%
+  drop_na() %>%
+  group_by(variable) %>%
+  summarise(avg.r.daily = mean(returns), avg.r.yearly = 252 * avg.r.daily, sd.daily = sd(returns), sd.yearly = sqrt(252)*sd.daily, SR = round(avg.r.yearly/sd.yearly,2), skewness = round(moments::skewness(returns),2), kurtosis = round(moments::kurtosis(returns),2)) %>%
+  mutate_at(vars(avg.r.daily, avg.r.yearly, sd.daily, sd.yearly), ~  paste0(round(100 * .x,2),"%")) %>%
+  kableExtra::kable(booktabs = T) %>%
+  kableExtra::kable_styling()
+```
+
+## Discussion
+
+TBC.
+
+## Instrument costs
+
+For now, we assume the cost of each argument, roughly in line with values from the the book Systematic Trading by Robert Carver. In particular, we consider the following table that summarises the trading costs of the different instruments.
+
+Costs below are wrong: need to make them more reflective of reality.
+
+
+```{r}
+data.costs = data.frame(Instruments = colnames(data)[-1], investment.block = c(1000,6600,1000,1000), cost.per.block = c(1,1,3,4), avg.spread = c(1,8,1,1), annual.volatility = c(0.005*sqrt(252), 0.0075*sqrt(252), 0.2, 0.3), fee = c(0,0,3,4), currency = c('usd','eur','mxp','usd')) %>%
+  mutate(Instrument.Currency.Vol = investment.block * cost.per.block * annual.volatility) %>%
+  mutate(execution.cost = 0.5 * avg.spread * cost.per.block + fee) %>%
+  mutate(cost.in.SR.unit = 2*execution.cost/( Instrument.Currency.Vol)) 
+
+data.costs %>%
+  kableExtra::kable(booktabs = T) %>%
+  kableExtra::kable_styling()
+```
+
+
+In the implementation, the volatility will be dynamically computed to take into account time variations.
+
+
+## Access
+
+TBC.
+
+
+
+# Forecasts
+
+
+For this simple case, we consider two simple technical trading rule based on moving averages. In particular, we consider moving average rules with a lookback of 16, 32, 64, and 128 days, respectively. We will consider two distinct trading rules: namely the MA1664 (MA32128) which considers the 16 (32) and 64 (128) lookback rules, respectively. This is transformed to a forecast with a range from -20 to +20, with +20 being very bullish. I am not sure the capping is done correctly. For now, i scale each variable before doing the capping, not sure it takes into account the volatility of the underlying series.
+
+
+```{r}
+g.data2 = g.data %>%
+  group_by(variable) %>%
+  mutate(raw.n = scale(raw)) %>%
+  mutate(ma16=zoo::rollapply(raw.n,16,mean,align='right',fill=NA)) %>%
+  mutate(ma32=zoo::rollapply(raw.n,32,mean,align='right',fill=NA)) %>%
+  mutate(ma64=zoo::rollapply(raw.n,64,mean,align='right',fill=NA)) %>%
+  mutate(ma128=zoo::rollapply(raw.n,128,mean,align='right',fill=NA)) %>%
+  drop_na() %>%
+  mutate(ma1664 = ma16-ma64) %>%
+  mutate(tr1664 = ma1664/mean(ma1664,na.rm=T) + 9) %>%
+  mutate(tr1664 = case_when(tr1664>20 ~ 20, tr1664 < -20 ~ -20, T ~ tr1664)) %>%
+  mutate(ma32128 = ma32-ma128) %>%
+  mutate(tr32128 = ma32128/mean(ma32128,na.rm=T) + 9) %>%
+  mutate(tr32128 = case_when(tr32128>20 ~ 20, tr32128 < -20 ~ -20, T ~ tr32128))
+
+g.data2 %>%
+  filter(date >='2019-01-01' & variable == 'Eurostoxx') %>%
+  gather(key=ma, value = tradingrule, ma16:ma128) %>%
+  ggplot() +
+  ggtitle('Trading rules in action') +
+  geom_line(aes(x=date,y=tradingrule,color=ma, linetype=ma)) +
+  geom_line(aes(x=date,y=raw.n)) +
+  facet_wrap(~variable, scales = 'free') +
+  scale_color_manual('Moving Averages', values = c('blue','red','yellow','green')) +
+  scale_linetype_manual('Moving Averages', values = c(1:4)) +
+  scale_x_date(date_breaks = '3 months', date_labels = '%YM%m') +
+  ylab('Eurostoxx') +
+  theme(legend.position = c(0.2,0.2), axis.text.x = element_text(angle = 90))
+
+
+
+g.data2 %>%
+  filter(date >='2020-01-01') %>%
+  ggplot() +
+  ggtitle('Scaled forecasts') +
+  geom_line(aes(x=date,y=tr1664, color = 'Fast Lookback')) +
+  geom_line(aes(x=date,y=tr32128, color = 'Slow lookback')) +
+  facet_wrap(~variable, scales = 'free') +
+  scale_color_manual('Trading Rules', values = c('blue','black')) +
+  scale_x_date(date_breaks = '3 months', date_labels = '%YM%m') +
+  ylab('Eurostoxx') +
+  theme(legend.position = 'none', axis.text.x = element_text(angle = 90))
+```
+
+
+# Combined Forecasts
+
+
+To stay simple, we give a 50% share to each forecast to get the weighted average forecast:
+```{r}
+g.data3 = g.data2 %>%
+  mutate(w.forecast = 0.5 * tr1664 + 0.5 * tr32128) %>%
+  dplyr::select(-starts_with("ma"),-starts_with('tr')) 
+
+mean(g.data2$tr1664)
+
+
+g.data3 %>%
+  filter(date >='2017-01-01') %>%
+  ggplot() +
+  ggtitle('Combined Forecasts') +
+  geom_line(aes(x=date,y=w.forecast)) +
+  facet_wrap(~variable)
+```
+
+
+Now, we need to multiply by the forecast diversification multiplier to have the same volatility as the initial forecast (because of the diversification). I don't do it here because it's not clear we actually have to do it (?). Expectations are linear operators... Ask Rob.
+
+# Volatility Targetting
+
+
+Now, we want to set the daily volatility target. We assume that our capital is \$1,000,000 and that our volatility target is 30%. We are going to do it instrument by instrument.
+
+The first step is to compute the rolling standard deviation. We consider a lookback of 25 business days. You can then compute the volatility scalar, which tells you how many contracts you should buy to hit your volatility target (assuming you only invest in this sub instrument).
+
+```{r}
+trading.capital = 1e6
+vol.target = 0.6
+
+g.data4 = g.data3 %>%
+    mutate(rolling.daily.vol=zoo::rollapply(returns,25,sd,align='right',fill=NA)) %>%
+  right_join(data.costs %>%
+  rename(variable=Instruments), by = 'variable') %>%
+  drop_na() %>%
+  mutate(icv = investment.block * cost.per.block * rolling.daily.vol) %>%
+  mutate(daily.vol.target = trading.capital * vol.target) %>%
+  mutate(volatility.scalar = daily.vol.target/icv) %>%
+  mutate(subsystem.position = volatility.scalar * w.forecast/10) 
+  
+# g.data4 %>%
+#   ggplot() +
+#   ggtitle('Volatility Scalars') +
+#   geom_line(aes(x=date,y=volatility.scalar)) +
+#   facet_wrap(~variable, scales='free')
+
+g.data4 %>%
+  filter(date >='2015-01-01') %>%
+  ggplot() +
+  ggtitle('Subsystem position') +
+  geom_line(aes(x=date,y=subsystem.position)) +
+  facet_wrap(~variable, scales='free')
+```
+
+
+# Portfolios
+
+Now, we assume the diversification multiplier is equal to 1.5 and put equal weight to each subsystem.
+
+```{r}
+share.subsystem = 1/4
+div.multiplier = 1.5
+
+g.data5 = g.data4 %>%
+  mutate(system.position = share.subsystem * div.multiplier * subsystem.position )
+```
+
+Now we need to record the actual trades, only recording trades when the position moves by more than 10%.
+
+```{r}
+g.data6 = g.data5 %>%
+  mutate(system.position.inertia = system.position) %>%
+  mutate(system.position.inertia = case_when(system.position.inertia/dplyr::lag(system.position.inertia)<1.1 ~ dplyr::lag(system.position.inertia), TRUE ~ system.position)) 
+
+
+g.data6 %>%
+  filter(date >='2008-11-01' & date <='2008-12-01') %>%
+  ggplot() +
+  ggtitle('Effect of position inertia') +
+  geom_line(aes(x=date,y=system.position.inertia, color = 'Position with inertia')) +
+  geom_line(aes(x=date,y=system.position, color = 'Position without inertia')) +
+  facet_wrap(~variable, scales='free') +
+  scale_color_manual('',values=c('black','blue')) +
+  theme(legend.position = 'bottom')
+```
+
+
+How much is invested in each subsystem?
+
+```{r}
+g.data7 = g.data6 %>%
+  group_by(variable) %>%
+  mutate(l.system.position.inertia = dplyr::lag(system.position.inertia)) %>%
+  drop_na(l.system.position.inertia) %>%
+  mutate(cash.invested =  l.system.position.inertia*cost.per.block) 
+
+
+g.data7 %>%
+  ggplot() +
+  ggtitle('Cash invested in each subystem',subtitle = 'negative position implies shorting') +
+  geom_line(aes(x=date,y=cash.invested)) +
+  facet_wrap(~variable)
+```
+
+
+
+# Speed & Size
+
+Now, we want to compute the turnover, i.e. the number of trades each year. To do that, we need to look at the variation in the position which are expressed in terms of contract. To have a volatility standardized version, we need to divide by the volatility scalar. Because a turnover is a buy and a sell, we divide by two.
+
+
+```{r}
+g.data7 %>%
+  mutate(trade.variation = system.position.inertia - dplyr::lag(system.position.inertia)) %>%
+  mutate(year= lubridate::year(date)) %>%
+  group_by(year,variable) %>%
+  summarise(sum=sum(abs(trade.variation)/(2*mean(volatility.scalar)),na.rm=T)) %>%
+  ggplot() +
+  ggtitle('Volatility standardized turnover') +
+  geom_line(aes(x=year,y=sum)) +
+  facet_wrap(~variable, scales='free') 
+```
+
+
+Now, we would need to compute the standardize cost in unit of Sharpe Ratio. TO DO.
+
+
+# Performance
+
+
+Now, we want to compute the performance of our portfolio. To do so, we multiply the cash invested each day in a given position by its daily return. The cumulative sum of these daily returns is the returns of the invested capital. To get the total returns, one has to sum these cumulative sums over the three different instruments, and add the initial trading capital to get the total returns in cash.
+
+
+## Performance without trading costs
+
+```{r}
+g.data8 = g.data7 %>%
+  mutate(daily.r.cash = cash.invested*returns) %>%
+  mutate(cum.r = cumsum(daily.r.cash))
+
+g.data8 %>%
+  ggplot() +
+  ggtitle('Cumulative returns by instrument') +
+  geom_line(aes(x=date,y=cum.r)) +
+  facet_wrap(~variable)
+```
+
+Now, for the total returns:
+```{r}
+g.data8 %>%
+  group_by(date) %>%
+  summarise(cum.r = sum(cum.r) + trading.capital) %>%
+  ggplot() +
+   ggtitle('Total Returns') +
+  geom_line(aes(x=date,y=cum.r))
+```
+
+Now, we want to see how much of the initial trading capital is "active" at each date (as a percentage of the initial trading capital). We need to take the absolute to take into account the shorting:
+
+```{r}
+g.data8 %>%
+  group_by(date) %>%
+  summarise(cash.invested = sum(abs(cash.invested))) %>%
+  ggplot() +
+  geom_line(aes(x=date,y=(cash.invested)/trading.capital)) +
+  scale_y_continuous(labels = scales::percent) 
+```
+
+
+
+## The effect of trading costs
+
+
+
+
+# Analytics
+
+
+
+
+```{r}
+# g.data %>%
+#   filter(date >='2017-01-01') %>%
+#   group_by(key) %>%
+#   mutate(ma1=zoo::rollapply(value,1,mean,align='right',fill=NA)) %>%
+#   mutate(ma2=zoo::rollapply(value,15,mean,align='right',fill=NA)) %>%
+#   #filter(date < '2010-01-01') %>%
+#   mutate(r = (value-dplyr::lag(value))/dplyr::lag(value)) %>%
+#   mutate(signal = case_when(ma1 >= ma2 ~ 1, ma1 < ma2 ~ -1, T ~ 0)) %>% 
+#   mutate(signal = dplyr::lag(signal)) %>%
+#   drop_na() %>%
+#   mutate(r.s = r * signal) %>%
+#   mutate(cumprod.r = cumprod(1+r),
+#          cumprod.r.strat = cumprod(1+r.s)) %>%
+#   mutate(peak.v = zoo::rollapply(cumprod.r.strat,seq_along(cumprod.r.strat),max,align='right',fill=NA)) %>%
+#   mutate(drawdown = (cumprod.r.strat-peak.v)/peak.v) %>%
+#   mutate(dummy.trade = case_when(signal != dplyr::lag(signal) ~ 1, TRUE ~ 0)) %>%
+#   mutate(trade.index= cumsum(dummy.trade)) %>%
+#   group_by(trade.index,key) %>%
+#   mutate(trade.r = zoo::rollapply(r.s,seq_along(value),function(x) prod(1+x),align='right',fill=NA)) %>%
+#   mutate(cummin.trade.r = dplyr::lag(cummin(trade.r))) %>%
+#   mutate(out.condition = case_when(cummin.trade.r <= 0.99 ~ 1, T~ 0)) %>%
+#   group_by(key) %>%
+#   mutate(signal2 = signal) %>% 
+#   mutate(signal2 = ifelse(out.condition==1, 0, signal)) %>%
+#   mutate(r.s2 = r * signal2) %>%
+#   mutate(cumprod.r.strat2 = cumprod(1+r.s2)) %>%
+#   mutate(peak.v2 = zoo::rollapply(cumprod.r.strat2,seq_along(cumprod.r.strat2),max,align='right',fill=NA)) %>%
+#   mutate(drawdown2 = (cumprod.r.strat2-peak.v2)/peak.v2) 
+
+
+```
+
+
+
+
+

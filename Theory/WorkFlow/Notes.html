@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.324">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Notes</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="Notes_files/libs/clipboard/clipboard.min.js"></script>
+<script src="Notes_files/libs/quarto-html/quarto.js"></script>
+<script src="Notes_files/libs/quarto-html/popper.min.js"></script>
+<script src="Notes_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="Notes_files/libs/quarto-html/anchor.min.js"></script>
+<link href="Notes_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="Notes_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="Notes_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="Notes_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="Notes_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+</head>
+
+<body>
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#calculating-the-cost-of-trading" id="toc-calculating-the-cost-of-trading" class="nav-link active" data-scroll-target="#calculating-the-cost-of-trading"><span class="header-section-number">1</span> Calculating the cost of trading</a>
+  <ul class="collapse">
+  <li><a href="#execution-costs" id="toc-execution-costs" class="nav-link" data-scroll-target="#execution-costs"><span class="header-section-number">1.1</span> Execution costs</a></li>
+  <li><a href="#rule-of-thumb" id="toc-rule-of-thumb" class="nav-link" data-scroll-target="#rule-of-thumb"><span class="header-section-number">1.2</span> Rule of thumb</a></li>
+  <li><a href="#converting-into-cash-equivalent" id="toc-converting-into-cash-equivalent" class="nav-link" data-scroll-target="#converting-into-cash-equivalent"><span class="header-section-number">1.3</span> Converting into cash equivalent</a></li>
+  <li><a href="#other-types-of-costs" id="toc-other-types-of-costs" class="nav-link" data-scroll-target="#other-types-of-costs"><span class="header-section-number">1.4</span> Other types of costs</a></li>
+  <li><a href="#standardizing-execution-costs" id="toc-standardizing-execution-costs" class="nav-link" data-scroll-target="#standardizing-execution-costs"><span class="header-section-number">1.5</span> Standardizing execution costs</a>
+  <ul class="collapse">
+  <li><a href="#motivation" id="toc-motivation" class="nav-link" data-scroll-target="#motivation"><span class="header-section-number">1.5.1</span> Motivation</a></li>
+  <li><a href="#methodology" id="toc-methodology" class="nav-link" data-scroll-target="#methodology"><span class="header-section-number">1.5.2</span> Methodology</a></li>
+  <li><a href="#comparative-statics" id="toc-comparative-statics" class="nav-link" data-scroll-target="#comparative-statics"><span class="header-section-number">1.5.3</span> Comparative statics</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#maximum-position" id="toc-maximum-position" class="nav-link" data-scroll-target="#maximum-position"><span class="header-section-number">2</span> Maximum position</a>
+  <ul class="collapse">
+  <li><a href="#standardised-turnover" id="toc-standardised-turnover" class="nav-link" data-scroll-target="#standardised-turnover"><span class="header-section-number">2.1</span> Standardised turnover</a></li>
+  <li><a href="#maximum-position-1" id="toc-maximum-position-1" class="nav-link" data-scroll-target="#maximum-position-1"><span class="header-section-number">2.2</span> Maximum position</a>
+  <ul class="collapse">
+  <li><a href="#how-much-can-you-lose" id="toc-how-much-can-you-lose" class="nav-link" data-scroll-target="#how-much-can-you-lose"><span class="header-section-number">2.2.1</span> How much can you lose?</a></li>
+  <li><a href="#can-you-cope-with-the-risk" id="toc-can-you-cope-with-the-risk" class="nav-link" data-scroll-target="#can-you-cope-with-the-risk"><span class="header-section-number">2.2.2</span> Can you cope with the risk?</a></li>
+  <li><a href="#can-you-realise-that-risk" id="toc-can-you-realise-that-risk" class="nav-link" data-scroll-target="#can-you-realise-that-risk"><span class="header-section-number">2.2.3</span> Can you realise that risk?</a></li>
+  <li><a href="#is-this-the-right-level-of-risk" id="toc-is-this-the-right-level-of-risk" class="nav-link" data-scroll-target="#is-this-the-right-level-of-risk"><span class="header-section-number">2.2.4</span> Is this the right level of risk?</a></li>
+  <li><a href="#recommended-percentage-volatility-targets" id="toc-recommended-percentage-volatility-targets" class="nav-link" data-scroll-target="#recommended-percentage-volatility-targets"><span class="header-section-number">2.2.5</span> Recommended percentage volatility targets</a></li>
+  <li><a href="#volatility-target" id="toc-volatility-target" class="nav-link" data-scroll-target="#volatility-target"><span class="header-section-number">2.2.6</span> Volatility target</a></li>
+  </ul></li>
+  </ul></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Notes</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+</header>
+
+<section id="calculating-the-cost-of-trading" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Calculating the cost of trading</h1>
+<p>In this section, we provide a consistent framework to compute trading costs.</p>
+<p>Generally, backtests assume that you can pay the mid price when trading a given instrument (where the mid price is defined as the average between the bid and the ask quote). In practice, however, the price that you will achieve depends on how large your trades are compared to the available volume. If you are a large hedge fund with large trades, you may end up paying significantly more than the mid price. In what follows, we will assume that your typical trade is less than the usual size available on the inside of the spread. This assumption may reveal inadequate for larger traders.</p>
+<section id="execution-costs" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="execution-costs"><span class="header-section-number">1.1</span> Execution costs</h2>
+<p><strong>Execution costs</strong> are the difference between the mid-price and what you get when you actually trade (this is important for backtesting: execution costs is what you pay <strong>above</strong> the mid-price).</p>
+</section>
+<section id="rule-of-thumb" class="level2" data-number="1.2">
+<h2 data-number="1.2" class="anchored" data-anchor-id="rule-of-thumb"><span class="header-section-number">1.2</span> Rule of thumb</h2>
+<p>As a rule of thumb, smaller traders can expect to pay (at most) roughly the half of the usual bid ask spread. Let the mid-price of the Eurostoxx future be 3,369.5, wih a bid at 3,369 and a ask at 3,370. This means that smaller traders can expect to pay at most 0.5 points (half of the bid-ask spread).</p>
+</section>
+<section id="converting-into-cash-equivalent" class="level2" data-number="1.3">
+<h2 data-number="1.3" class="anchored" data-anchor-id="converting-into-cash-equivalent"><span class="header-section-number">1.3</span> Converting into cash equivalent</h2>
+<p>How to convert the execution cost in cash terms? To answer this question, one first needs to consider the investment block. In the previous example, the investment block is 3,370 points. It turns out that a point costs 10£ such that the investment block is 33,700£. Similarly, the 0.5 points execution cost is equal to 5£.</p>
+</section>
+<section id="other-types-of-costs" class="level2" data-number="1.4">
+<h2 data-number="1.4" class="anchored" data-anchor-id="other-types-of-costs"><span class="header-section-number">1.4</span> Other types of costs</h2>
+<p>There are potentially other types of costs, such as: Fee per ticket, Fee based on trade size, or Percentage value fee.</p>
+<p>We further assume that we face a fee based on trade size of 3£, such that the total trading cost per investment block is equal to 8£.</p>
+</section>
+<section id="standardizing-execution-costs" class="level2" data-number="1.5">
+<h2 data-number="1.5" class="anchored" data-anchor-id="standardizing-execution-costs"><span class="header-section-number">1.5</span> Standardizing execution costs</h2>
+<section id="motivation" class="level3" data-number="1.5.1">
+<h3 data-number="1.5.1" class="anchored" data-anchor-id="motivation"><span class="header-section-number">1.5.1</span> Motivation</h3>
+<p>Execution costs hurt the performance and can be thus expressed as negative returns. Because investors are generally risk-averse, investment which returns a steady state of returns are more valued than those generating the same average returns but with higher volatility; this is reflected by a larger SR in the former type of investment. By the same argument, negative returns (or positive execution costs) are particularly damaging to an investment with low volatility. To understand this intuitively, consider two asset with the same expected return but widly different volatility. Asset A (B) returns 1£ and -1 (1,000,000£ and (-1,000,000£) with equal probability probability. Both Assets A and B have an average return of 0, but have markedly different volatility. Now assume that the execution cost is 1£. Assets A now returns 0 and -2 with equal probability, while the returns of Asset B are essentially unchanged. This extreme example shows intuitively how execution costs particularly hurt the performance of investment with low-volatility. It is thus important to normalize execution costs by the volatility of the underlying instrument. By normalizing by volatility, the resulting costs also have an intuitive measure as they can be expressed in units of the Sharpe Ratio (SR).</p>
+<p>This is referred to as <strong>volatility standardization</strong>.</p>
+</section>
+<section id="methodology" class="level3" data-number="1.5.2">
+<h3 data-number="1.5.2" class="anchored" data-anchor-id="methodology"><span class="header-section-number">1.5.2</span> Methodology</h3>
+<p>In the previous part, we have found that the total trading cost for the Eurostoxx is 8£ per investment block. We now compute the (recent) daily standard deviation and find that it is equal to 1.5%. The annualised standard deviation is rougly equal to <span class="math inline">\(16\times1.5 = 24\%\)</span>. As the investment block is equal to £33,700, this implies that the 68% confidence interval for yearly move is £8,088 (equal to 24% of £33,700). This number is referred to as the <strong>investment currency volatility</strong>. We can now back up the standardized trading cost:</p>
+<p>The round trip standardized cost is then computed as : <span class="math inline">\(\frac{2\times£8}{£8,088}=0.002\)</span>SR. In other words, one round trip trade in the Eurostoxx decreases the Sharpe Ratio by 0.002, which is quite cheap. As expected, this standardized cost is higher for instrument which have lower volatility (intuitively, a steady execution cost harms more their performance). In the next sections, we consider the (standardized cost) of other instruments.</p>
+</section>
+<section id="comparative-statics" class="level3" data-number="1.5.3">
+<h3 data-number="1.5.3" class="anchored" data-anchor-id="comparative-statics"><span class="header-section-number">1.5.3</span> Comparative statics</h3>
+<p>Here, we look at how the standardised cost moves depending on parameters: a higher investment block means the code is relatively smaller. Similarly, higher volatility means the cost is not as important on a risk-adjusted basis.</p>
+<div class="cell">
+<details>
+<summary>Code for the graph</summary>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>f.standardized.cost <span class="ot">=</span> <span class="cf">function</span>(inv.block, exp.cost, yearly.vol){</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="dv">2</span><span class="sc">*</span>exp.cost<span class="sc">/</span>(yearly.vol<span class="sc">*</span>inv.block)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>df1 <span class="ot">=</span> <span class="fu">data.frame</span>(<span class="at">investment.block =</span> <span class="fu">seq</span>(<span class="dv">1000</span>,<span class="dv">2000</span>,<span class="at">by=</span><span class="dv">100</span>), <span class="at">yearly.volatility =</span> <span class="fl">49.5</span>, <span class="at">expected.cost =</span> <span class="dv">8</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rowwise</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">stand.cost =</span> <span class="fu">f.standardized.cost</span>(investment.block, expected.cost, yearly.volatility))</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>df2 <span class="ot">=</span> <span class="fu">data.frame</span>(<span class="at">investment.block =</span> <span class="dv">1500</span>, <span class="at">yearly.volatility =</span> <span class="fu">seq</span>(<span class="dv">40</span>,<span class="dv">50</span>,<span class="at">by=</span><span class="dv">1</span>), <span class="at">expected.cost =</span> <span class="dv">8</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rowwise</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">stand.cost =</span> <span class="fu">f.standardized.cost</span>(investment.block, expected.cost, yearly.volatility))</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>p1 <span class="ot">=</span> df1 <span class="sc">%&gt;%</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>() <span class="sc">+</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">x=</span>investment.block, <span class="at">y=</span>stand.cost)) <span class="sc">+</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_cartesian</span>(<span class="at">ylim =</span> <span class="fu">c</span>(<span class="fl">0.0001</span>,<span class="fl">0.00035</span>))</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>p2 <span class="ot">=</span> df2 <span class="sc">%&gt;%</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>() <span class="sc">+</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">x=</span>yearly.volatility, <span class="at">y=</span>stand.cost)) <span class="sc">+</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_cartesian</span>(<span class="at">ylim =</span> <span class="fu">c</span>(<span class="fl">0.0001</span>,<span class="fl">0.00035</span>))</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>gridExtra<span class="sc">::</span><span class="fu">grid.arrange</span>(p1,p2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="Notes_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>See other examples from the book.</p>
+<!-- ## Summing up -->
+<!-- The first thing you need is to get a sense of how volatile your returns are. To do so, you can first compute the recent daily standard deviation. Let's say it is equal to 1.33\%. Now, assume that the investment block is equal to 75,000. Thus, on any given day, you can expect your return to be between $\{-0.0133\times 75000;+0.0133\times75000\}$, which is equal to $\{-997.5\$;+997.5\$\}$, which roughly corresponds to a 68\% confidence interval. This number is the **investment currency volatility**. Another way to obtain it is by multiplying the block value (equal to $0.01\times$ the investment block) by $1.33$. The investment currency volatilty thus tells you how much you can expect to gain or lose on an average day for a given investment block. -->
+<!-- To have the annualised investment currency volatility, we first need to annualise the standard deviation by multiplying it by $\sqrt{252}$ which is approximately equal to 16. In our case, the annualised volatility is thus equal to $0.0133 \times 16$ = 21.28%. Thus, the invesment annualised investment currency volatility is equal to $0.2128\times75,000=15,960\$$. -->
+<!-- Now to compute the cost, one needs the spread. Assuming that you are a small trader, the execution cost can be approximated as being half of the average bid-ask spread. If the spread is 1 point, then the execution cost is 0.5. To convert this in dollar, you need the investment block. Let's assume that a future trades at 5000 points, and that the investment block conversion is 10 dollars per point. The investment block is thus equal to 50000 dollars. The execution cost in dollars is thus equal to $0.5\times 10=\$5$. -->
+<!-- Now, to get the standardised cost, one needs to divide the execution cost by the volatility of the instrument. This step allows to compare different instruments which have different volatility. The underlying idea is that the performance of instruments which have lower volatility suffer more from a given execution cost. Basically, one can understand execution cost as reducing the returns of your investment. A positive return which is highly volatile leads to a lower Sharpe ratio, because investors are risk averse (they prefer steady positive returns). In other words, steady returns hurt more the performance of your investment. Thus, if an asset is not very volatilite and you pay a steady execution cost, it will hurt the performance more. By dividing by the standard deviation, the execution cost appears larger for low risk investment, because it brings about a larger decrease in the SR performance. -->
+<!-- The standardised cost formula is obtained by dividing the execution cost per investment block (expressed in currency) by the annualised investment currency volatility (expressed in currency). It relates the execution cost to the average move in your portfolio, and is arguably a better representaion of the true cost of the trade. If the trade costs 5\$ but the underlying instrument yields + 1 million and minus 1 million with equal probability, the importance of the 5\$ is smaller to a trade which yields + 5 and minus 5 with equal probability. -->
+<!-- Let's take another example with a spread bet on the FTSE 100 which has a (current) price volatility of 0.75\% (equal to the recent standard deviation) and an instrument block of 1\$ per point. The FTSE is at 6600 points. The block value is thus 6600x0.01=66 points which is equal to 66\$ in cash terms. The instrument currency volatility is thus equal to 0.75 $\times$ 66 = 49.5\$. -->
+<!-- Now, we can compute the costs. Let the average spread be 8 points, which means the expected execution costs per block is around 4 points, or 4\$. The standardized cost is obtained by dividing twice the expected cost per block by the annualized standard deviation, which is equal to $\sqrt{252}\approx 16$ the daily standard deviation. In numbers, this is: $\frac{2\times 4\$}{16 \times 49.5\$}=0.01SR$, which is an order of magnitude higher than the Eurostoxx future. -->
+<!-- ```{r} -->
+<!-- # Daily price volatility is 0.75% -->
+<!-- daily.volatility = 0.0075  -->
+<!-- yearly.volatility = sqrt(252) * daily.volatility -->
+<!-- # Instrument block (what is worth one point in dollar) -->
+<!-- instrument.block = 1 -->
+<!-- # Current value (in points) -->
+<!-- current.value = 6600 -->
+<!-- # Block value (in dollar) -->
+<!-- block.value = current.value * 0.01 * instrument.block -->
+<!-- # Average bid-ask spread (in points) -->
+<!-- avg.spread = 4 -->
+<!-- # Expected cost -->
+<!-- exp.cost = avg.spread * 4 -->
+<!-- # Standardized cost -->
+<!-- stand.cost = (2 * exp.cost)/(100*yearly.volatility * block.value) -->
+<!-- ``` -->
+</section>
+</section>
+</section>
+<section id="maximum-position" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Maximum position</h1>
+<p>Given that small account sizes present problems, how would an asset allocating investor with a few thousand euros decide how many of the thousands of exchange traded funds to hold? How does a staunch systems trader without millions of dollars in trading capital work out which of the 200 or so liquid futures contracts they should trade?</p>
+<p>The principle you should follow is to hold the most diversified portfolio possible without running into any problems with maximum positions. Ideally you want at least one instrument from each major asset class. For each asset class you should choose instruments that don’t give you a maximum position that is too small; as I said above my recommendation would be to avoid anything with a maximum of less than four instrument blocks.</p>
+<section id="standardised-turnover" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="standardised-turnover"><span class="header-section-number">2.1</span> Standardised turnover</h2>
+<p>Turnover (number of round trip trade of an investment block per year) x standardized cost = Standardized turnover.</p>
+</section>
+<section id="maximum-position-1" class="level2" data-number="2.2">
+<h2 data-number="2.2" class="anchored" data-anchor-id="maximum-position-1"><span class="header-section-number">2.2</span> Maximum position</h2>
+<p>Staunch systems traders and semi-automatic traders should assume the maximum combined forecast of +20, which implies a maximum possible position of:</p>
+<p>2 × volatility scalar × instrument weight × instrument diversification multiplier</p>
+<p>What is the volatility scalar?</p>
+<p>You first need the concept of cash volatility target. A cash volatility target is important to measure how much risk you are willing to take.</p>
+<p>Risk can be many things: Well it could be how much I’m prepared to lose next year. Or tomorrow. Or next week. Are you talking about the absolute maximum loss I can cope with, or the average, or the worst loss I’d expect 95 days out of 100 (the so called ‘Value at Risk’)? Which question would you like me to answer?</p>
+<p>To keep things simple I use a single figure to measure appetite for risk – an expected standard deviation, which I call the volatility target. You can measure this as a percentage, or in cash terms, and over different time periods. So for example the daily cash volatility target is the average expected standard deviation of the daily portfolio returns.</p>
+<p>Your volatility target is the long-term average of expected, predictable, risk. The exact predictable risk you have on any given day will depend on the strength of your forecasts, and on the current expected correlation of asset prices. You’ll also face unpredictable risks if your forecast of volatility or correlations is wrong. In any case the actual amount you lose or gain on any given day will be random, since even a perfect estimation of risk only tells you what your average gains and losses will be.</p>
+<p>I find it’s easier to look at an annualised cash volatility target, which will be the annualised expected daily standard deviation of returns. Beware: the annualised volatility target isn’t the maximum, or even the average, you might expect to lose in a year. Indeed it’s quite probable you will sometimes lose more than that in a year.</p>
+<p>It’s also easier to separate out your cash account value and the appropriate level of risk to run on that money. The amount of cash you are trading with is your trading capital. You then decide what your volatility target will be as a percentage of that capital. If you multiply this percentage volatility target by your trading capital, then you’ll get your volatility target in cash terms. So with a million dollars of trading capital and an annualised 10% percentage volatility target, you would have an annualised cash volatility target of $100,000.</p>
+<p>Here are the points to consider when setting your trading capital and percentage volatility targets:</p>
+<ol type="1">
+<li>How much can you lose?: How much money do you have to trade or invest?</li>
+<li>How much risk can you cope with?: Can you afford to lose it all? Can you afford to lose half? What probability of losing half would you be comfortable with? What probability of losing 90% of it over ten years would make you lose sleep?</li>
+<li>Can you realise that risk?: Given the instruments you are investing in and the safe amount of leverage (if any) you can use, can you actually hit the risk target?</li>
+<li>Is this level of risk right for your system?: Given the characteristics of your trading system, expected Sharpe ratio and skew, does the amount of risk make sense?</li>
+</ol>
+<section id="how-much-can-you-lose" class="level3" data-number="2.2.1">
+<h3 data-number="2.2.1" class="anchored" data-anchor-id="how-much-can-you-lose"><span class="header-section-number">2.2.1</span> How much can you lose?</h3>
+<p>The initial trading capital is the amount of cash you start with, bearing in mind that there is a chance that you might lose all or nearly all of it, although hopefully that’s quite unlikely. I’ll show you below how to set your percentage volatility target based on exactly how relaxed you are about losses.</p>
+</section>
+<section id="can-you-cope-with-the-risk" class="level3" data-number="2.2.2">
+<h3 data-number="2.2.2" class="anchored" data-anchor-id="can-you-cope-with-the-risk"><span class="header-section-number">2.2.2</span> Can you cope with the risk?</h3>
+<p>Do the expected loss for different volatility target and skew parameters. Bottom line is that you don’t often want to go above 50% volatility target, and try to not to have negative skew.</p>
+<p>With negative skew it’s vital to have sufficient capital to cope with the very bad days, weeks and months you will occasionally see. This is especially true with high leverage and the risk your broker will make a margin call at the worst possible time. With positive skew the difficulty is psychological; committing to a system when you spend most of your time suffering cumulative losses.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>capital <span class="ot">=</span> <span class="fl">1e5</span> </span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>expected.SR <span class="ot">=</span> <span class="fl">0.5</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>annual.vol <span class="ot">=</span> <span class="fl">0.1</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>daily.vol <span class="ot">=</span> annual.vol<span class="sc">/</span><span class="fu">sqrt</span>(<span class="dv">252</span>)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>annual.mean <span class="ot">=</span> expected.SR <span class="sc">*</span> annual.vol</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>daily.mean <span class="ot">=</span> annual.mean<span class="sc">/</span><span class="dv">252</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>ret.daily <span class="ot">=</span> ret.weekly <span class="ot">=</span> ret.monthly <span class="ot">=</span> ret.yearly <span class="ot">=</span> <span class="fu">list</span>()</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">10000</span>){</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>  ret.daily[[i]] <span class="ot">=</span> <span class="fu">min</span>(<span class="fu">rnorm</span>(<span class="dv">20</span>, <span class="at">mean =</span> daily.mean, <span class="at">sd =</span> daily.vol))</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>  ret.weekly[[i]] <span class="ot">=</span> <span class="fu">min</span>(<span class="fu">rnorm</span>(<span class="dv">52</span>, <span class="at">mean =</span> daily.mean <span class="sc">*</span> <span class="dv">5</span>, <span class="at">sd =</span> daily.vol <span class="sc">*</span> <span class="fu">sqrt</span>(<span class="dv">5</span>)))</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>  ret.monthly[[i]] <span class="ot">=</span> <span class="fu">min</span>(<span class="fu">rnorm</span>(<span class="dv">10</span><span class="sc">*</span><span class="dv">12</span>, <span class="at">mean =</span> daily.mean <span class="sc">*</span> <span class="dv">12</span>, <span class="at">sd =</span> daily.vol <span class="sc">*</span> <span class="fu">sqrt</span>(<span class="dv">252</span>)))</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>avg.daily.worst <span class="ot">=</span> <span class="fu">do.call</span>(rbind,ret.daily) <span class="sc">%&gt;%</span> <span class="fu">min</span>()</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>avg.daily.worst <span class="sc">*</span> capital</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] -2693.719</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>avg.weekly.worst <span class="ot">=</span> <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(ret.weekly, <span class="cf">function</span>(x) <span class="fu">min</span>(x))) <span class="sc">%&gt;%</span> <span class="fu">mean</span>()</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>avg.monthly.worst <span class="ot">=</span> <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(ret.monthly, <span class="cf">function</span>(x) <span class="fu">min</span>(x))) <span class="sc">%&gt;%</span> <span class="fu">mean</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="can-you-realise-that-risk" class="level3" data-number="2.2.3">
+<h3 data-number="2.2.3" class="anchored" data-anchor-id="can-you-realise-that-risk"><span class="header-section-number">2.2.3</span> Can you realise that risk?</h3>
+<p>If you’re investing in leveraged derivatives like futures and spread bets then very high levels of risk are attainable, even if they aren’t desirable. Such systems can easily run at over 100% annualised target volatility with margin to spare. But if you can’t get enough, or any, leverage then you might have a problem achieving your target volatility. If you are buying short-term government bonds with an expected volatility of perhaps 5% a year, then without leverage it’s impossible to create a portfolio with a 50% volatility target. With no leverage you are restricted to the amount of natural risk that your instruments have. With only 100% leverage you are limited to twice that natural risk, and so on.</p>
+<p>Even if you are able to leverage up as required to hit a particular percentage volatility target, it would be very unwise if excessive gearing is needed. This is particularly problematic for negative skew instruments and trading strategies, which tend to have low natural risk – until they blow up.</p>
+<p>I’ve mentioned before the huge appreciation of the Swiss franc that happened in just minutes in January 2015. At the start of the day in question the natural risk of holding a position in EUR/CHF was tiny, at around 1% a year. If this was the only instrument you were trading then to achieve a 50% annualised volatility target would have needed 50 times leverage. Retail FX brokers had no compunction in allowing this, with leverage up to 500 times available from some providers.</p>
+<p>If you had been on the wrong side of this move, with your entire trading capital leveraged 50 times, then a 2% appreciation would have wiped you out. But the actual move was over 16%! Only those with leverage of 7 times or less would have survived the day, which implies a maximum achievable 7% volatility target. You should ensure that with a given percentage volatility target any individual position would not wipe you out after the largest conceivable move. Diversifying amongst many different instruments will also help, and we’ll return to that in chapter eleven, ‘Portfolios’. A 16% move with 50 times leverage would have been just about survivable if EUR/CHF was only 10% of your portfolio, assuming no other losses had occured elsewhere. Ideally such low volatility instruments, requiring insanely high leverage, should be excluded from any trading system.</p>
+</section>
+<section id="is-this-the-right-level-of-risk" class="level3" data-number="2.2.4">
+<h3 data-number="2.2.4" class="anchored" data-anchor-id="is-this-the-right-level-of-risk"><span class="header-section-number">2.2.4</span> Is this the right level of risk?</h3>
+<p>Suppose you’ve decided on a 200% volatility target. You’ve got the leverage you need; but you haven’t got carried away. Furthermore you’re confident that you will cope with the spectacularly bumpy ride tables 20 to 23 imply you’ll be getting. Assuming you are a profitable trader, should you then set your target at 200% and expect to end up incredibly wealthy through the magic of compound interest? The short answer is no. There is a Goldilocks level of risk – not too little and not too much. Even if you are willing and able to go above this level you shouldn’t, as you will end up with more than your tongue getting burnt. Naively if you expect to be profitable then you should bet as much as you’re allowed to. However this ignores the compounding of returns over time. Suppose you have a fantastic expected average return of 100% on each trade for a given bet size. You then lose 90% of your capital on your first trade and make 190% on your next trade. Unfortunately there is only 29% of your cash left, even though you’ve achieved the expected average return of 100% per trade.104 To maximise your final profits, the optimal bet to make is actually a quarter of the original size. Nearly all professional gamblers, many professional money managers and some amateurs in both fields know that this optimal point should be calculated using something called the Kelly criterion.105 Kelly has some useful but potentially dangerous implications for how you should set your percentage volatility target.</p>
+<p>A simple formula can be used to determine how you should set your volatility target, given the underlying Sharpe ratio (SR) of your trading system. You should set your volatility target at the same level as your expected SR. So if you think your annualised SR will be 0.25 then you should have a 25% annualised volatility target. You can see this in figure 21, where for an SR 0.5 system the best performance is achieved with the optimal 50% volatility target. This is true for all three systems shown, regardless of skew.</p>
+<p>This finding is potentially dangerous when used by an over confident investor. It’s very easy with back-testing software to get over-fitted performance with a Sharpe ratio (SR) of 2, 3 or even higher. If you believe those are attainable then a risk percentage of 100% or 200% seems justified. As table 24 shows, running at a 200% risk with SR of 2.0 implies huge returns of 400% a year! Unfortunately many people with capital of $20,000 will conclude it’s possible to earn 400% a year, or $80,000, as full-time traders. There are also plenty of brokers who will happily provide them with the necessary leverage. Most of these people will quickly lose their $20,000, as they won’t achieve their expected SR. It’s very difficult to know exactly what your true Sharpe ratio really would have been in the past, with back-tests giving you only a rough upwardly estimate, and it’s utterly impossible to know what SR to expect in the future.</p>
+</section>
+<section id="recommended-percentage-volatility-targets" class="level3" data-number="2.2.5">
+<h3 data-number="2.2.5" class="anchored" data-anchor-id="recommended-percentage-volatility-targets"><span class="header-section-number">2.2.5</span> Recommended percentage volatility targets</h3>
+<p>I run a highly diversified futures trading system with around 45 instruments, eight trading rules drawn from four different styles, and 30 trading rule variations. In a 35 year back-test, conservatively fitted with out of sample bootstrapping, it has a Sharpe ratio (SR) of around 1.0 after costs, but the highest volatility target I’d advocate using</p>
+<p>There are several reasons for my caution. Firstly, it’s unlikely a back-tested SR will be achieved in the future. On average realised performance is never as good as in back-tests. This is because it’s very easy to over-fit if you ignore the advice in chapters three and four. Additionally it’s difficult with ideas first testing to avoid using only trading rules that you already know would have worked. Even if you could avoid over-fitting actual profits are unlikely to be as high as they could have been in the past. This is because future asset returns are likely to be lower than in the historical data set we usually use for back-testing.</p>
+<p>These suggest that for an out of sample bootstrap, as I’ve used in my own system, a ratio of 0.75 should be applied to find a more realistic Sharpe ratio. Much lower ratios should be used if you haven’t been as careful with your fitting. I also said in chapter two that I think the absolute maximum SR that staunch systems traders should expect to achieve is 1.0, regardless of how good their back-test is. Secondly, using the full Kelly criteria is far too aggressive, because of the risk of getting a poor run of luck and the large drawdowns that can result, even if SR expectations are correct.107 In table 23 someone using the correct Kelly target of 50% would have a 10% chance of losing half their money after ten years; which most people would find worrying. It’s far better to use Half-Kelly and set your risk at half the optimal.</p>
+<p>For my own system I started with the back-tested Sharpe ratio of 1.0. Multiplying by 0.75 (as I’m using out of sample bootstrapping) from table 14, this gives me a realistic SR of 0.75. With full Kelly criterion betting that would be a 75% volatility target, which I then halved to get 37% (rounding down).</p>
+<p>This assumes your trading system, like mine, has zero or positive skew. You should be very careful if you have expected negative skew.</p>
+</section>
+<section id="volatility-target" class="level3" data-number="2.2.6">
+<h3 data-number="2.2.6" class="anchored" data-anchor-id="volatility-target"><span class="header-section-number">2.2.6</span> Volatility target</h3>
+<p>Let’s assume an (aggressive) volatility target of 50%.</p>
+<p>Assuming we have £100,000 of capital, this implies £50,000 of annualised cash target volatility. To have the daily target, one needs to multiply the initial capital (100,000) by the daily volatility target (50 x <span class="math inline">\(\sqrt{252}\)</span>)</p>
+</section>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>

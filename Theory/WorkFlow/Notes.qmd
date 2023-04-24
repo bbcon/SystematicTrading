@@ -1,0 +1,389 @@
+---
+title: "Notes"
+format: 
+  html:
+    toc: true
+    number-sections: true
+editor: source
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r, include = F}
+library(tidyverse)
+theme_set(theme_classic())
+```
+
+
+# Calculating the cost of trading
+
+In this section, we provide a consistent framework to compute trading costs.
+
+Generally, backtests assume that you can pay the mid price when trading a given instrument (where the mid price is defined as the average between the bid and the ask quote). In practice, however, the price that you will achieve depends on how large your trades are compared to the available volume. If you are a large hedge fund with large trades, you may end up paying significantly more than the mid price. In what follows, we will assume that your typical trade is less than the usual size available on the inside of the spread. This assumption may reveal inadequate for larger traders.
+
+## Execution costs
+
+
+**Execution costs** are the difference between the mid-price and what you get when you actually trade (this is important for backtesting: execution costs is what you pay **above** the mid-price).
+
+## Rule of thumb
+
+As a rule of thumb, smaller traders can expect to pay (at most) roughly the half of the usual bid ask spread. Let the mid-price of the Eurostoxx future be 3,369.5, wih a bid at 3,369 and a ask at 3,370. This means that smaller traders can expect to pay at most 0.5 points (half of the bid-ask spread).
+
+
+## Converting into cash equivalent
+
+How to convert the execution cost in cash terms? To answer this question, one first needs to consider the investment block. In the previous example, the investment block is 3,370 points. It turns out that a point costs 10£ such that the investment block is 33,700£. Similarly, the 0.5 points execution cost is equal to 5£. 
+
+
+## Other types of costs
+
+There are potentially other types of costs, such as: Fee per ticket, Fee based on trade size, or Percentage value fee.
+
+We further assume that we face a fee based on trade size of 3£, such that the total trading cost per investment block is equal to 8£.
+
+
+## Standardizing execution costs
+
+### Motivation
+
+Execution costs hurt the performance and can be thus expressed as negative returns. Because investors are generally risk-averse, investment which returns a steady state of returns are more valued than those generating the same average returns but with higher volatility; this is reflected by a larger SR in the former type of investment. By the same argument, negative returns (or positive execution costs) are particularly damaging to an investment with low volatility. To understand this intuitively, consider two asset with the same expected return but widly different volatility. Asset A (B) returns 1£ and -1 (1,000,000£ and (-1,000,000£) with equal probability probability. Both Assets A and B have an average return of 0, but have markedly different volatility. Now assume that the execution cost is 1£. Assets A now returns 0 and -2 with equal probability, while the returns of Asset B are essentially unchanged. This extreme example shows intuitively how execution costs particularly hurt the performance of investment with low-volatility. It is thus important to normalize execution costs by the volatility of the underlying instrument. By normalizing by volatility, the resulting costs also have an intuitive measure as they can be expressed in units of the Sharpe Ratio (SR).
+
+This is referred to as **volatility standardization**.
+
+
+### Methodology
+
+In the previous part, we have found that the total trading cost for the Eurostoxx is 8£ per investment block. We now compute the (recent) daily standard deviation and find that it is equal to 1.5%. The annualised standard deviation is rougly equal to $16\times1.5 = 24\%$. As the investment block is equal to £33,700, this implies that the 68% confidence interval for yearly move is £8,088 (equal to 24% of £33,700). This number is referred to as the **investment currency volatility**. We can now back up the standardized trading cost:
+
+
+The round trip standardized cost is then computed as : $\frac{2\times£8}{£8,088}=0.002$SR. In other words, one round trip trade in the Eurostoxx decreases the Sharpe Ratio by 0.002, which is quite cheap. As expected, this standardized cost is higher for instrument which have lower volatility (intuitively, a steady execution cost harms more their performance). In the next sections, we consider the (standardized cost) of other instruments. 
+
+
+### Comparative statics
+
+Here, we look at how the standardised cost moves depending on parameters: a higher investment block means the code is relatively smaller. Similarly, higher volatility means the cost is not as important on a risk-adjusted basis.
+
+```{r}
+#| code-fold: true
+#| code-summary: "Code for the graph"
+f.standardized.cost = function(inv.block, exp.cost, yearly.vol){
+  2*exp.cost/(yearly.vol*inv.block)
+}
+
+df1 = data.frame(investment.block = seq(1000,2000,by=100), yearly.volatility = 49.5, expected.cost = 8) %>%
+  rowwise() %>%
+  mutate(stand.cost = f.standardized.cost(investment.block, expected.cost, yearly.volatility))
+
+df2 = data.frame(investment.block = 1500, yearly.volatility = seq(40,50,by=1), expected.cost = 8) %>%
+  rowwise() %>%
+  mutate(stand.cost = f.standardized.cost(investment.block, expected.cost, yearly.volatility))
+
+p1 = df1 %>%
+  ggplot() +
+  geom_line(aes(x=investment.block, y=stand.cost)) +
+  coord_cartesian(ylim = c(0.0001,0.00035))
+p2 = df2 %>%
+  ggplot() +
+  geom_line(aes(x=yearly.volatility, y=stand.cost)) +
+  coord_cartesian(ylim = c(0.0001,0.00035))
+
+gridExtra::grid.arrange(p1,p2)
+```
+
+
+Here are a few
+
+
+<!-- ## Summing up -->
+
+<!-- The first thing you need is to get a sense of how volatile your returns are. To do so, you can first compute the recent daily standard deviation. Let's say it is equal to 1.33\%. Now, assume that the investment block is equal to 75,000. Thus, on any given day, you can expect your return to be between $\{-0.0133\times 75000;+0.0133\times75000\}$, which is equal to $\{-997.5\$;+997.5\$\}$, which roughly corresponds to a 68\% confidence interval. This number is the **investment currency volatility**. Another way to obtain it is by multiplying the block value (equal to $0.01\times$ the investment block) by $1.33$. The investment currency volatilty thus tells you how much you can expect to gain or lose on an average day for a given investment block. -->
+
+
+<!-- To have the annualised investment currency volatility, we first need to annualise the standard deviation by multiplying it by $\sqrt{252}$ which is approximately equal to 16. In our case, the annualised volatility is thus equal to $0.0133 \times 16$ = 21.28%. Thus, the invesment annualised investment currency volatility is equal to $0.2128\times75,000=15,960\$$. -->
+
+
+<!-- Now to compute the cost, one needs the spread. Assuming that you are a small trader, the execution cost can be approximated as being half of the average bid-ask spread. If the spread is 1 point, then the execution cost is 0.5. To convert this in dollar, you need the investment block. Let's assume that a future trades at 5000 points, and that the investment block conversion is 10 dollars per point. The investment block is thus equal to 50000 dollars. The execution cost in dollars is thus equal to $0.5\times 10=\$5$. -->
+
+<!-- Now, to get the standardised cost, one needs to divide the execution cost by the volatility of the instrument. This step allows to compare different instruments which have different volatility. The underlying idea is that the performance of instruments which have lower volatility suffer more from a given execution cost. Basically, one can understand execution cost as reducing the returns of your investment. A positive return which is highly volatile leads to a lower Sharpe ratio, because investors are risk averse (they prefer steady positive returns). In other words, steady returns hurt more the performance of your investment. Thus, if an asset is not very volatilite and you pay a steady execution cost, it will hurt the performance more. By dividing by the standard deviation, the execution cost appears larger for low risk investment, because it brings about a larger decrease in the SR performance. -->
+
+
+<!-- The standardised cost formula is obtained by dividing the execution cost per investment block (expressed in currency) by the annualised investment currency volatility (expressed in currency). It relates the execution cost to the average move in your portfolio, and is arguably a better representaion of the true cost of the trade. If the trade costs 5\$ but the underlying instrument yields + 1 million and minus 1 million with equal probability, the importance of the 5\$ is smaller to a trade which yields + 5 and minus 5 with equal probability. -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Let's take another example with a spread bet on the FTSE 100 which has a (current) price volatility of 0.75\% (equal to the recent standard deviation) and an instrument block of 1\$ per point. The FTSE is at 6600 points. The block value is thus 6600x0.01=66 points which is equal to 66\$ in cash terms. The instrument currency volatility is thus equal to 0.75 $\times$ 66 = 49.5\$. -->
+
+
+<!-- Now, we can compute the costs. Let the average spread be 8 points, which means the expected execution costs per block is around 4 points, or 4\$. The standardized cost is obtained by dividing twice the expected cost per block by the annualized standard deviation, which is equal to $\sqrt{252}\approx 16$ the daily standard deviation. In numbers, this is: $\frac{2\times 4\$}{16 \times 49.5\$}=0.01SR$, which is an order of magnitude higher than the Eurostoxx future. -->
+
+
+<!-- ```{r} -->
+<!-- # Daily price volatility is 0.75% -->
+<!-- daily.volatility = 0.0075  -->
+<!-- yearly.volatility = sqrt(252) * daily.volatility -->
+<!-- # Instrument block (what is worth one point in dollar) -->
+<!-- instrument.block = 1 -->
+<!-- # Current value (in points) -->
+<!-- current.value = 6600 -->
+<!-- # Block value (in dollar) -->
+<!-- block.value = current.value * 0.01 * instrument.block -->
+
+<!-- # Average bid-ask spread (in points) -->
+<!-- avg.spread = 4 -->
+<!-- # Expected cost -->
+<!-- exp.cost = avg.spread * 4 -->
+
+<!-- # Standardized cost -->
+<!-- stand.cost = (2 * exp.cost)/(100*yearly.volatility * block.value) -->
+
+<!-- ``` -->
+
+# Maximum position
+
+
+Given that small account sizes present problems, how would an asset allocating investor with a few thousand euros decide how many of the thousands of exchange traded funds to hold? How does a staunch systems trader without millions of dollars in trading capital work out which of the 200 or so liquid futures contracts they should trade?
+
+
+The principle you should follow is to hold the most diversified portfolio possible without running into any problems with maximum positions. Ideally you want at least one instrument from each major asset class. For each asset class you should choose instruments that don’t give you a maximum position that is too small; as I said above my recommendation would be to avoid anything with a maximum of less than four instrument blocks.
+
+
+## Standardised turnover
+
+
+Turnover (number of round trip trade of an investment block per year) x standardized cost = Standardized turnover.
+
+## Maximum position
+
+Staunch systems traders and semi-automatic traders should assume the maximum combined forecast of +20, which implies a maximum possible position of:
+
+
+2 × volatility scalar × instrument weight × instrument diversification multiplier
+
+
+What is the volatility scalar?
+
+
+You first need the concept of cash volatility target. A cash volatility target is important to measure how much risk you are willing to take.
+
+Risk can be many things: Well it could be how much I’m prepared to lose next year. Or tomorrow. Or next week. Are you talking about the absolute maximum loss I can cope with, or the average, or the worst loss I’d expect 95 days out of 100 (the so called ‘Value at Risk’)? Which question would you like me to answer?
+
+To keep things simple I use a single figure to measure appetite for risk – an expected standard deviation, which I call the volatility target. You can measure this as a percentage, or in cash terms, and over different time periods. So for example the daily cash volatility target is the average expected standard deviation of the daily portfolio returns.
+
+
+ Your volatility target is the long-term average of expected, predictable, risk. The exact predictable risk you have on any given day will depend on the strength of your forecasts, and on the current expected correlation of asset prices. You’ll also face unpredictable risks if your forecast of volatility or correlations is wrong. In any case the actual amount you lose or gain on any given day will be random, since even a perfect estimation of risk only tells you what your average gains and losses will be.
+ 
+ 
+ I find it’s easier to look at an annualised cash volatility target, which will be the annualised expected daily standard deviation of returns. Beware: the annualised volatility target isn’t the maximum, or even the average, you might expect to lose in a year. Indeed it’s quite probable you will sometimes lose more than that in a year.
+ 
+ 
+ It’s also easier to separate out your cash account value and the appropriate level of risk to run on that money. The amount of cash you are trading with is your trading capital. You then decide what your volatility target will be as a percentage of that capital. If you multiply this percentage volatility target by your trading capital, then you’ll get your volatility target in cash terms. So with a million dollars of trading capital and an annualised 10% percentage volatility target, you would have an annualised cash volatility target of $100,000.
+ 
+ 
+ Here are the points to consider when setting your trading capital and percentage volatility targets:
+ 
+1. How much can you lose?: How much money do you have to trade or invest?
+2. How much risk can you cope with?: Can you afford to lose it all? Can you afford to lose half? What probability of losing half would you be comfortable with? What probability of losing 90% of it over ten years would make you lose sleep?
+3. Can you realise that risk?: Given the instruments you are investing in and the safe amount of leverage (if any) you can use, can you actually hit the risk target?
+4. Is this level of risk right for your system?: Given the characteristics of your trading system, expected Sharpe ratio and skew, does the amount of risk make sense?
+
+
+
+### How much can you lose?
+
+The initial trading capital is the amount of cash you start with, bearing in mind that there is a chance that you might lose all or nearly all of it, although hopefully that’s quite unlikely. I’ll show you below how to set your percentage volatility target based on exactly how relaxed you are about losses.
+
+
+
+### Can you cope with the risk?
+
+
+Do the expected loss for different volatility target and skew parameters. Bottom line is that you don't often want to go above 50% volatility target, and try to not to have negative skew.
+
+With negative skew it’s vital to have sufficient capital to cope with the very bad days, weeks and months you will occasionally see. This is especially true with high leverage and the risk your broker will make a margin call at the worst possible time. With positive skew the difficulty is psychological; committing to a system when you spend most of your time suffering cumulative losses.
+
+```{r}
+capital = 1e5 
+expected.SR = 0.5
+annual.vol = 0.1
+daily.vol = annual.vol/sqrt(252)
+annual.mean = expected.SR * annual.vol
+daily.mean = annual.mean/252
+
+
+ret.daily = ret.weekly = ret.monthly = ret.yearly = list()
+for(i in 1:10000){
+  ret.daily[[i]] = min(rnorm(20, mean = daily.mean, sd = daily.vol))
+  ret.weekly[[i]] = min(rnorm(52, mean = daily.mean * 5, sd = daily.vol * sqrt(5)))
+  ret.monthly[[i]] = min(rnorm(10*12, mean = daily.mean * 12, sd = daily.vol * sqrt(252)))
+}
+avg.daily.worst = do.call(rbind,ret.daily) %>% min()
+avg.daily.worst * capital
+
+avg.weekly.worst = do.call(rbind, lapply(ret.weekly, function(x) min(x))) %>% mean()
+avg.monthly.worst = do.call(rbind, lapply(ret.monthly, function(x) min(x))) %>% mean()
+
+
+
+
+
+```
+
+
+
+### Can you realise that risk?
+
+If you’re investing in leveraged derivatives like futures and spread bets then very high levels of risk are attainable, even if they aren’t desirable. Such systems can easily run at over 100% annualised target volatility with margin to spare.
+But if you can’t get enough, or any, leverage then you might have a problem achieving your target volatility. If you are buying short-term government bonds with an expected volatility of perhaps 5% a year, then without leverage it’s impossible to create a portfolio with a 50% volatility target. With no leverage you are restricted to the amount of natural risk that your instruments have. With only 100% leverage you are limited to twice that natural risk, and so on.
+
+
+Even if you are able to leverage up as required to hit a particular percentage volatility target, it would be very unwise if excessive gearing is needed. This is particularly problematic for negative skew instruments and trading strategies, which tend to have low natural risk – until they blow up.
+
+I’ve mentioned before the huge appreciation of the Swiss franc that happened in just minutes in January 2015. At the start of the day in question the natural risk of holding a position in EUR/CHF was tiny, at around 1% a year. If this was the only instrument you were trading then to achieve a 50% annualised volatility target would have needed 50 times leverage. Retail FX brokers had no compunction in allowing this, with leverage up to 500 times available from some providers.
+
+
+If you had been on the wrong side of this move, with your entire trading capital leveraged 50 times, then a 2% appreciation would have wiped you out. But the actual move was over 16%! Only those with leverage of 7 times or less would have survived the day, which implies a maximum achievable 7% volatility target.
+You should ensure that with a given percentage volatility target any individual position would not wipe you out after the largest conceivable move. Diversifying amongst many different instruments will also help, and we’ll return to that in chapter eleven, ‘Portfolios’. A 16% move with 50 times leverage would have been just about survivable if EUR/CHF was only 10% of your portfolio, assuming no other losses had occured elsewhere.
+Ideally such low volatility instruments, requiring insanely high leverage, should be excluded from any trading system.
+
+
+### Is this the right level of risk?
+
+Suppose you’ve decided on a 200% volatility target. You’ve got the leverage you need; but you haven’t got carried away. Furthermore you’re confident that you will cope with the spectacularly bumpy ride tables 20 to 23 imply you’ll be getting. Assuming you are a profitable trader, should you then set your target at 200% and expect to end up incredibly wealthy through the magic of compound interest?
+The short answer is no. There is a Goldilocks level of risk – not too little and not too much. Even if you are willing and able to go above this level you shouldn’t, as you will end up with more than your tongue getting burnt.
+Naively if you expect to be profitable then you should bet as much as you’re allowed to. However this ignores the compounding of returns over time. Suppose you have a fantastic expected average return of 100% on each trade for a given bet size. You then lose 90% of your capital on your first trade and make 190% on your next trade. Unfortunately there is only 29% of your cash left, even though you’ve achieved the expected average return of 100% per trade.104 To maximise your final profits, the optimal bet to make is actually a quarter of the original size.
+Nearly all professional gamblers, many professional money managers and some amateurs in both fields know that this optimal point should be calculated using something called the Kelly criterion.105 Kelly has some useful but potentially dangerous implications for how you should set your percentage volatility target.
+
+
+
+A simple formula can be used to determine how you should set your volatility target, given the underlying Sharpe ratio (SR) of your trading system. You should set your volatility target at the same level as your expected SR. So if you think your annualised SR will be 0.25 then you should have a 25% annualised volatility target.
+You can see this in figure 21, where for an SR 0.5 system the best performance is achieved with the optimal 50% volatility target. This is true for all three systems shown, regardless of skew.
+
+
+
+This finding is potentially dangerous when used by an over confident investor. It’s very easy with back-testing software to get over-fitted performance with a Sharpe ratio (SR) of 2, 3 or even higher. If you believe those are attainable then a risk percentage of 100% or 200% seems justified. As table 24 shows, running at a 200% risk with SR of 2.0 implies huge returns of 400% a year!
+Unfortunately many people with capital of \$20,000 will conclude it’s possible to earn 400% a year, or \$80,000, as full-time traders. There are also plenty of brokers who will happily provide them with the necessary leverage. Most of these people will quickly lose their \$20,000, as they won’t achieve their expected SR. It’s very difficult to know exactly what your true Sharpe ratio really would have been in the past, with back-tests giving you only a rough upwardly estimate, and it’s utterly impossible to know what SR to expect in the future.
+
+
+### Recommended percentage volatility targets
+
+
+
+
+I run a highly diversified futures trading system with around 45 instruments, eight trading rules drawn from four different styles, and 30 trading rule variations. In a 35 year back-test, conservatively fitted with out of sample bootstrapping, it has a Sharpe ratio (SR) of around 1.0 after costs, but the highest volatility target I’d advocate using
+
+
+There are several reasons for my caution. Firstly, it’s unlikely a back-tested SR will be achieved in the future. On average realised performance is never as good as in back-tests. This is because it’s very easy to over-fit if you ignore the advice in chapters three and four. Additionally it’s difficult with ideas first testing to avoid using only trading rules that you already know would have worked.
+Even if you could avoid over-fitting actual profits are unlikely to be as high as they could have been in the past. This is because future asset returns are likely to be lower than in the historical data set we usually use for back-testing.
+
+
+
+These suggest that for an out of sample bootstrap, as I’ve used in my own system, a ratio of 0.75 should be applied to find a more realistic Sharpe ratio. Much lower ratios should be used if you haven’t been as careful with your fitting. I also said in chapter two that I think the absolute maximum SR that staunch systems traders should expect to achieve is 1.0, regardless of how good their back-test is.
+Secondly, using the full Kelly criteria is far too aggressive, because of the risk of getting a poor run of luck and the large drawdowns that can result, even if SR expectations are correct.107 In table 23 someone using the correct Kelly target of 50% would have a 10% chance of losing half their money after ten years; which most people would find worrying. It’s far better to use Half-Kelly and set your risk at half the optimal.
+
+
+For my own system I started with the back-tested Sharpe ratio of 1.0. Multiplying by 0.75 (as I’m using out of sample bootstrapping) from table 14, this gives me a realistic SR of 0.75. With full Kelly criterion betting that would be a 75% volatility target, which I then halved to get 37% (rounding down).
+
+
+This assumes your trading system, like mine, has zero or positive skew. You should be very careful if you have expected negative skew.
+
+
+
+
+### Volatility target
+
+Let's assume an (aggressive) volatility target of 50\%.
+
+Assuming we have £100,000 of capital, this implies £50,000 of annualised cash target volatility. To have the daily target, one needs to divide the annualised cash target volatility by $\sqrt{252}$, which gives us 3149.7£.
+
+
+Now we need the instrument value volatility of a given instrument, This is retrieved by multiplying the investment block value by the daily volatility. Assuming an investment block value of 750 (i.e. one percent of the investment block) and a standard deviation of 1.33, the instrument value volatility is £997.5.
+
+
+To achieve the daily volatility target of 3149.7, the investor should buy 3149.7/997.5=3.15 contracts. The value of 3.15 is a scaling factor which accounts for the difference between an instrument’s natural volatility and the required volatility of the portfolio. I call it the volatility scalar.
+
+In general the volatility scalar is equal to your daily cash volatility target, divided by the instrument value volatility. You’ll notice that both of these variables are in the same currency as your trading capital. Also please note that you should not round the volatility scalar to a whole number.
+
+
+
+## From forecast to position
+
+
+I’ve shown that the investor in the simple example for this chapter would need to own a long position in 93.52 crude oil futures (the volatility scalar) to realise their desired volatility target. This however ignores any forecast that the investor has made; either a combined forecast from multiple trading rules, or the single forecasts made by asset allocating investors and semi-automatic traders. At the start of the chapter I’d assumed that the forecast is -6 in the example. Clearly the investor is going to want to be short, rather than long, but by how much?
+
+
+To work this out you need to think about average forecasts. Over a long period of time you’ll still want to be hitting your volatility target for returns, no matter what your daily forecasts are. In chapter seven (page 112) I recommended that forecasts should have a long run average absolute value of 10. This implies that to hit your target over the long run you’d want your positions to have the same average expected variation as if you had a constant forecast of +10.
+
+
+
+Effectively then the volatility scalar gives you a position which is consistent with having a constant forecast of +10. If you’re currently more optimistic with a larger positive forecast you should buy more blocks; and if you’re pessimistic you should have fewer blocks, or go short if the forecast is negative In the example above I calculated a volatility scalar of 93.52 crude oil futures contracts. This will be consistent with the long run forecast, so a forecast of +10 equates to buying 93.52 contracts (ignoring for the moment that you can’t hold fractional contracts). If the forecast falls to +5 you’d only be half as confident, and want half the original position, 46.76 contracts. A forecast of -20 would mean you’d want to go short twice the original position, a sell of 187.04 blocks.
+The resulting quantity of blocks is the subsystem position. It’s a subsystem position because, as I said earlier, we’re assuming in this chapter your entire capital is invested in a subsystem trading one instrument, rather than in a complete trading system running across a number of instruments.
+
+
+
+A subsystem position is equal to the volatility scalar multiplied by the forecast, then divided by the long average of 10. So for the crude oil example with a forecast of -6, and where I’ve worked out the volatility scalar to be 93.52, the subsystem position will be (93.52 × -6) ÷ 10 = -56.11, implying a short of 56.11 contracts. Again you shouldn’t do any rounding of non integer positions for now.
+
+
+You can now answer all of Sergei’s questions and you’ve finally got positions for a trading system that has a single instrument, the subsystem position. But any good trading system will have multiple assets and even semi-automatic traders normally have more than one bet on the table at a time. The next chapter examines how you can put several subsystems together into a portfolio.
+
+
+## Summing up
+
+
+Maximum position is twice the volatility scalar (because the maximum forecast has a value of 20).
+
+
+
+# Selecting trading rules
+
+
+You need to compute how much turnover each rule has (i.e. how many round trips per year you have). This gives you an expected standardised cost.
+
+
+How many turnovers depend on the rule and the forecast value.
+
+
+
+
+# Forecast weight and trading speed
+
+
+Now you need to blend your trading rule forecasts into a combined forecast, as in chapter eight. I’ll show you how to determine the necessary forecast weights using the handcrafting method that I explained in chapter four, although you could also use the bootstrapping procedure. To use the handcrafting method I’ll need correlations and some way of grouping the trading rule variations.
+
+
+
+In line with the advice in chapter twelve, ‘Speed and Size’, I will assume all variations have the same pre-cost Sharpe ratio (SR), since consistent evidence of statistical outperformance by one rule or another is difficult to find. This implies that instruments with different costs, and so varying after-cost SR, would have different forecast weights once I’d adjusted the original handcrafted weights.
+
+
+But for brevity I’ve calculated a single set of weights using the cost of the most expensive instrument – V2TX futures. The turnover in round trips per year of each trading rule and the resulting annual cost in SR units using the V2X standardised cost of 0.009 SR units is shown in table 45. Since the largest difference in costs is only 0.031 SR units, the resulting SR adjustments will be extremely small and I haven’t made any Sharpe ratio adjustments in this example.
+
+
+
+This means you can use the forecast weights and forecast diversification multiplier that I’d already worked out in that earlier chapter.
+
+
+## Theory
+
+
+
+
+
+
+
+
+
+
+
+
+
